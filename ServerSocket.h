@@ -1,5 +1,8 @@
 #ifndef SOCKET_H
 #define SOCKET_H
+
+#include<Socket.h>
+
 namespace sock
 {
 class ServerSocket: public Socket

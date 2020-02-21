@@ -1,5 +1,8 @@
 #ifndef CLIENT_SOCKET_H
 #define CLIENT_SOCKET_H
+
+#include<Socket.h>
+
 namespace sock
 {
 class ClientSocket: public Socket

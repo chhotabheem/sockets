@@ -1,5 +1,16 @@
 #ifndef SOCKET_H
 #define SOCKET_H
+
+#include<string>
+
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+
+#include<netinet/in.h>
+
 namespace sock
 {
 class Socket
