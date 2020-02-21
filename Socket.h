@@ -111,9 +111,27 @@ public:
     std::string receive()
     {
         std::string data;
-        byte_count = recv(m_socket_desc, buf, sizeof buf, 0);
-        return data;
+        char buf[1024];
+        auto n = recv(m_socket_desc, buf, m_prefix_msg_size, 0);
+        if(byte_count != m_prefix_msg_size)
+        {
+            return data;
+        }
+        std::string msg_size_str(buf);
+        auto msg_size = std::stoi(msg_size_str);
+        auto size_received =0;
+        while(size_received<msg_size)
+        {
+            n = recv(m_socket_desc, buf, sizeof(buf), 0);
+            if(n<=0)
+            {
+                return data;
+            }
+            data.append(buf);
+            size_received += n;
+        }
 
+        return data;
     }
 };
 
