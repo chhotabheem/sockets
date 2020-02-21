@@ -79,7 +79,7 @@ public:
         return m_addr_info;
     }
 
-    void send(const std::string& data)
+    void send(const std::string& data, int send_sock)
     {
         std::string data_size_str = std::to_string(data.size());
         auto data_size = data_size_str.size();
@@ -97,7 +97,7 @@ public:
 
         while(msg_sent_size < msg.size())
         {
-            n = send(m_socket_desc, buf+msg_sent_size, msg_remaining, 0);
+            n = send(send_sock, buf+msg_sent_size, msg_remaining, 0);
             if (n == -1)
             {
                 break;
@@ -108,11 +108,11 @@ public:
         }
     }
 
-    std::string receive()
+    std::string receive(int recv_sock)
     {
         std::string data;
         char buf[1024];
-        auto n = recv(m_socket_desc, buf, m_prefix_msg_size, 0);
+        auto n = recv(recv_sock, buf, m_prefix_msg_size, 0);
         if(byte_count != m_prefix_msg_size)
         {
             return data;
@@ -154,6 +154,18 @@ public:
         }
         return true;
     }
+
+    void send(std::string& data)
+    {
+        send(get_sock_descriptor(), data);
+
+    }
+
+    std::string receive()
+    {
+        return receive(get_sock_descriptor());
+    }
+
 };
 
 class ServerSocket: public Socket
@@ -165,6 +177,30 @@ public:
     ServerSocket(const ServerSocket& ) = delete;
     ServerSocket& operator=(const ServerSocket&) = delete;
     ServerSocket(ServerSocket&&) = delete;
+
+    bool bind()
+    {
+    }
+
+    bool listen()
+    {
+    }
+
+    bool accept()
+    {
+    }
+
+    void send(std::string& data)
+    {
+        send(conn_id, data);
+
+    }
+
+    std::string receive()
+    {
+        return receive(conn_id);
+    }
+
 };
 }
 #endif
