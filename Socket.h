@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include<sys/types.h>
 #include<sys/socket.h>
+#include <netdb.h>
 
 #include<netinet/in.h>
 
@@ -30,7 +31,7 @@ private:
         }
     }
 
-    void close()
+    void Close()
     {
         if(m_socket_desc != -1)
         {
@@ -44,36 +45,35 @@ public:
     ~Socket()
     {
         cleanup();
-        close();
+        Close();
     }
 
     Socket(const Socket& ) = delete;
     Socket& operator=(const Socket&) = delete;
     Socket(Socket&&) = delete;
-    bool create()
+    bool create(const std::string& server, const std::string& port)
     {
         struct addrinfo hints;
         int status;
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
-        if ((status = getaddrinfo(argv[1], NULL, &hints, &m_addr_info)) != 0)
+        if ((status = getaddrinfo(server.c_str(), port.c_str(), &hints, &m_addr_info_list)) != 0)
         {
             //fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
-            std::cout<<  "ERR: getaddrinfo: " <<  gai_strerror(status)<<std::endl;;
+            //std::cout<<  "ERR: getaddrinfo: " <<  gai_strerror(status)<<std::endl;;
             return false;
         }
-        for(m_addr_info = res; m_addr_info != nullptr; m_addr_info = m_addr_info->ai_next)
+        for(m_addr_info = m_addr_info_list; m_addr_info != nullptr; m_addr_info = m_addr_info->ai_next)
         {
-            m_socket_desc = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+            m_socket_desc = socket(m_addr_info->ai_family, m_addr_info->ai_socktype, m_addr_info->ai_protocol);
             if(m_socket_desc == -1)
             {
-                perror("client: socket()");
+                //perror("client: socket()");
                 continue;
             }
             else
             {
-                m_a
                 return true;
             }
         }
@@ -90,17 +90,17 @@ public:
         return m_addr_info;
     }
 
-    void send(const std::string& data, int send_sock)
+    void Send(const std::string& data, int send_sock)
     {
         std::string data_size_str = std::to_string(data.size());
         auto data_size = data_size_str.size();
         std::string msg;
         while(data_size < m_prefix_msg_size)
         {
-            msg.append('0');
+            msg.append("0");
             ++data_size;
         }
-        msg += msg_size_str + data;
+        msg += data_size_str + data;
         auto msg_sent_size = 0;
         auto msg_remaining = msg.size();
         const char* buf = msg.c_str();
@@ -119,12 +119,12 @@ public:
         }
     }
 
-    std::string receive(int recv_sock)
+    std::string Receive(int recv_sock)
     {
         std::string data;
         char buf[1024];
         auto n = recv(recv_sock, buf, m_prefix_msg_size, 0);
-        if(byte_count != m_prefix_msg_size)
+        if(n != m_prefix_msg_size)
         {
             return data;
         }

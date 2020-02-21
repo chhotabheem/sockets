@@ -1,7 +1,7 @@
 #ifndef CLIENT_SOCKET_H
 #define CLIENT_SOCKET_H
 
-#include<Socket.h>
+#include "Socket.h"
 
 namespace sock
 {
@@ -15,9 +15,9 @@ public:
     ClientSocket& operator=(const ClientSocket&) = delete;
     ClientSocket(ClientSocket&&) = delete;
 
-    bool connect()
+    bool Connect()
     {
-        if(connect(get_sock_descriptor(), get_sock_descriptor()->ai_addr, get_sock_descriptor()->ai_addrlen))
+        if(connect(get_sock_descriptor(), get_socket_addr_info()->ai_addr, get_socket_addr_info()->ai_addrlen))
         {
             perror("client: connect()");
             return false;
@@ -25,15 +25,15 @@ public:
         return true;
     }
 
-    void send(std::string& data)
+    void Send(std::string& data)
     {
-        send(get_sock_descriptor(), data);
+        Socket::Send(data, get_sock_descriptor());
 
     }
 
-    std::string receive()
+    std::string Receive()
     {
-        return receive(get_sock_descriptor());
+        return Socket::Receive(get_sock_descriptor());
     }
 
 };
