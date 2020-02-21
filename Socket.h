@@ -2,6 +2,7 @@
 #define SOCKET_H
 
 #include<string>
+#include<cstring>
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -55,7 +56,7 @@ public:
     {
         struct addrinfo hints;
         int status;
-        memset(&hints, 0, sizeof hints);
+        std::memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         if ((status = getaddrinfo(server.c_str(), port.c_str(), &hints, &m_addr_info_list)) != 0)
