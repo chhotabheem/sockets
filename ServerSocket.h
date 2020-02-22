@@ -47,6 +47,19 @@ public:
         return true;
     }
 
+    bool add_sock_id_for_monitoring(const int sock_id)
+    {
+
+        struct epoll_event event;
+        event.data.fd = sock_id;
+        event.events = EPOLLIN | EPOLLET;
+        if(epoll_ctl (m_epoll_id, EPOLL_CTL_ADD, sock_id, &event))
+        {
+            return false;
+        }
+        return true;
+    }
+
     bool init_epoll()
     {
         m_epoll_id = epoll_create1 (0);
@@ -54,15 +67,7 @@ public:
         {
             return false;
         }
-        struct epoll_event event;
-        event.data.fd = get_sock_descriptor();
-        event.events = EPOLLIN | EPOLLET;
-        if(epoll_ctl (m_epoll_id, EPOLL_CTL_ADD, get_sock_descriptor(), &event))
-        {
-            return false;
-        }
-        return true;
-
+        return add_sock_id_for_monitoring(get_sock_descriptor());
     }
 
     bool Accept()
@@ -86,21 +91,21 @@ public:
         return Socket::Receive(m_conn_descrip);
     }
 
-    bool ignore_event(const int i)
+    bool ignore_event(struct epoll_event& event)
     {
-        if ((m_epoll_events[i].events & EPOLLERR) ||
-                (m_epoll_events[i].events & EPOLLHUP) ||
-                (!(m_epoll_events[i].events & EPOLLIN)))
+        if ((event.events & EPOLLERR) ||
+                (event.events & EPOLLHUP) ||
+                (!(event.events & EPOLLIN)))
         {
-            close (m_epoll_events[i].data.fd);
+            close (event.data.fd);
             return true;
         }
         return false;
     }
 
-    bool is_event_on_listner_sock_id(const int i)
+    bool is_event_on_listner_sock_id(struct epoll_event& event)
     {
-        if (get_sock_descriptor() == m_epoll_events[i].data.fd)
+        if (get_sock_descriptor() == event.data.fd)
         {
             return true;
         }
@@ -109,144 +114,47 @@ public:
 
     void handle_event_for_new_conn()
     {
-
-        /* We have a notification on the listening socket, which
-           means one or more incoming connections. */
-        while (1)
+        while (true)
         {
-            struct sockaddr in_addr;
-            socklen_t in_len;
-            int infd;
-            char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-
-            in_len = sizeof in_addr;
-            infd = accept (sfd, &in_addr, &in_len); // create new socket fd from pending listening socket queue
-            if (infd == -1) // error
+            if(!Accept())
             {
-                if ((errno == EAGAIN) ||
-                        (errno == EWOULDBLOCK))
-                {
-                    /* We have processed all incoming connections. */
-                    break;
-                }
-                else
-                {
-                    perror ("accept");
-                    break;
-                }
+                break;
             }
-
-            int optval = 1;
-            setsockopt(infd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));  // set socket for port reuse
-
-            /* get the client's IP addr and port num */
-            s = getnameinfo (&in_addr, in_len,
-                             hbuf, sizeof hbuf,
-                             sbuf, sizeof sbuf,
-                             NI_NUMERICHOST | NI_NUMERICSERV);
-            if (s == 0)
-            {
-                printf("Accepted connection on descriptor %d "
-                       "(host=%s, port=%s)\n", infd, hbuf, sbuf);
-            }
-
-            /* Make the incoming socket non-blocking and add it to the
-               list of fds to monitor. */
-            int flags = fcntl (infd, F_GETFL, 0);
-            flags |= O_NONBLOCK;
-            fcntl (infd, F_SETFL, flags);
-
-            event.data.fd = infd;
-            event.events = EPOLLIN | EPOLLET;
-
-            s = epoll_ctl (efd, EPOLL_CTL_ADD, infd, &event);
-            if (s == -1)
+            set_to_non_blocking_mode(m_conn_descrip);
+            if(!add_sock_id_for_monitoring(m_conn_descrip))
             {
                 perror ("epoll_ctl");
                 abort ();
             }
-            clientMap[event.data.fd]=0;  // init msg counter
         }
-        continue;
     }
 
-    void handle_event_from_existing_conn()
+    void handle_event_from_existing_conn(struct epoll_event& event)
     {
 
-        /* We have data on the fd waiting to be read. Read and
-           display it. We must read whatever data is available
-           completely, as we are running in edge-triggered mode
-           and won't get a notification again for the same
-           data. */
-        int done = 0;
-
-        while (1)
-        {
-            ssize_t count;
-            char buf[BUFFERSIZE];
-
-            count = read (events[i].data.fd, buf, sizeof buf);
-
-            if (count == -1)
-            {
-                /* If errno == EAGAIN, that means we have read all
-                   data. So go back to the main loop. */
-                if (errno != EAGAIN)
-                {
-                    perror ("read");
-                    done = 1;
-                }
-                break;
-            }
-            else if (count == 0)
-            {
-                /* End of file. The remote has closed the
-                   connection. */
-                done = 1;
-                break;
-            }
-
-            buf[count]=0;
-            char wbuf[BUFFERSIZE];
-            int cx=snprintf(wbuf,BUFFERSIZE,"(fd:%d seq:%d) %s",events[i].data.fd, clientMap[events[i].data.fd],buf);
-
-            /* Write the buffer to standard output */
-            s = write (1, wbuf, cx);
-            if (s == -1)
-            {
-                perror ("write");
-                abort ();
-            }
-        }
-
-        if (done)
-        {
-            printf ("Closed connection on descriptor %d\n",
-                    events[i].data.fd);
-
-            /* Closing the descriptor will make epoll remove it
-               from the set of descriptors which are monitored. */
-            close (events[i].data.fd);
-        }
+        Socket::Receive(event.data.fd);
+        close (event.data.fd);
     }
+
     void communicate()
     {
         while (true)
         {
-            auto evts_received = epoll_wait (m_epoll_id, m_epoll_events, m_max_events, -1);
-            for (auto i = 0; i < evts_received; ++i)
+            auto num_of_evts_received = epoll_wait (m_epoll_id, m_epoll_events, m_max_events, -1);
+            for (auto i = 0; i < num_of_evts_received; ++i)
             {
-                if(ignore_event(i))
+                auto& event = m_epoll_events[i];
+                if(ignore_event(event))
                 {
                     continue;
                 }
-                if(is_event_on_listner_sock_id(i))
+                if(is_event_on_listner_sock_id(event))
                 {
                     handle_event_for_new_conn();
                 }
                 else
                 {
-                    handle_event_from_existing_conn();
+                    handle_event_from_existing_conn(event);
                 }
             }
         }

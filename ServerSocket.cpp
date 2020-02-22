@@ -4,15 +4,9 @@
 int main()
 {
     sock::ServerSocket ssock;
-    if(ssock.create("192.168.0.18", "9001") && ssock.Bind() && ssock.Listen()&& init_epoll())
+    if(ssock.create("192.168.0.18", "9001") && ssock.Bind() && ssock.Listen()&& ssock.init_epoll())
     {
-        sscok.communicate();
-        if(ssock.Accept())
-        {
-            std::string data;
-            ssock.Receive();
-            ssock.Send(data);
-        }
+        ssock.communicate();
     }
     return 0;
 }
