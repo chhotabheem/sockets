@@ -15,7 +15,6 @@ int main()
         pload.set_name("Zombie");
         pload.set_id(1300000);
         std::string data("hello server");
-        std::string data2("hello2 server");
         //pload.SerializeToString(&data);
         csock.Send(data);
         sleep(2);

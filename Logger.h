@@ -2,6 +2,7 @@
 #define LOGGER_H
 
 #include<fstream>
+#include<string>
 
 namespace que
 {
@@ -17,7 +18,7 @@ private:
 public:
     explicit Logger(std::string op_file, que::MsgQueue& queue):m_msg_queue(queue)
     {
-        m_msg_file.open(op_file, std::ios::out);
+        m_msg_file.open(op_file, std::ios::app);
     }
     ~Logger()
     {
@@ -29,7 +30,12 @@ public:
     Logger(const Logger&&) = delete;
     void write()
     {
-
+        while(true)
+        {
+            std::string msg = m_msg_queue.pop();
+            m_msg_file<< msg;
+            m_msg_file<<std::endl;
+        }
     }
 };
 }

@@ -5,6 +5,7 @@
 #include<mutex>
 #include<condition_variable>
 #include<string>
+#include<iostream>
 
 namespace que
 {
@@ -22,11 +23,6 @@ public:
     MsgQueue(const MsgQueue&&) = delete;
     MsgQueue& operator=(const MsgQueue&&) = delete;
     MsgQueue& operator=(const MsgQueue&) = delete;
-    bool is_empty()
-    {
-
-        return m_queue.empty();
-    }
 
     void push(std::string& msg)
     {
@@ -43,7 +39,7 @@ public:
         }
     }
 
-    std::string front()
+    std::string pop()
     {
         std::unique_lock<std::mutex> locker(m_que_mutex);
         m_con_var.wait(locker, [&]() {

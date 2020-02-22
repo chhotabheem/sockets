@@ -188,6 +188,10 @@ public:
             std::cout<<"handle_event_from_existing_conn(): close connection"<<std::endl;
             close(event.data.fd);
         }
+        else
+        {
+            m_message_queue.push(data);
+        }
         std::cout<<"exit: handle_event_from_existing_conn()"<<std::endl;
     }
 
