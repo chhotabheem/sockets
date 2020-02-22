@@ -174,8 +174,13 @@ public:
     void handle_event_from_existing_conn(struct epoll_event& event)
     {
         std::cout<<"enter: handle_event_from_existing_conn()"<<std::endl;
-        std::cout << Socket::Receive(event.data.fd)<<std::endl;
-        std::cout<<"handle_event_from_existing_conn(): close connection"<<std::endl;
+        std::string data = Socket::Receive(event.data.fd);
+        std::cout << data<<std::endl;
+        if(data.empty())
+        {
+            std::cout<<"handle_event_from_existing_conn(): close connection"<<std::endl;
+            close(event.data.fd);
+        }
         std::cout<<"exit: handle_event_from_existing_conn()"<<std::endl;
     }
 
