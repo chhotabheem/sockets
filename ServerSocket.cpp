@@ -19,7 +19,7 @@ int main()
     que::MsgQueue queue;
     std::thread msg_receiver(message_receiver_thread, std::ref(queue));
     msg_receiver.detach();
-    log::Logger logger(queue);
+    log::Logger logger("client_messages.txt", queue);
     logger.write();
 
     return 0;

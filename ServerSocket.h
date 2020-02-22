@@ -37,14 +37,14 @@ private:
         if (flags == -1)
         {
             perror ("fcntl");
-            return;
         }
         std::cout<<"exit: set_to_non_blocking_mode()"<<std::endl;
     }
 
 public:
-    ServerSocket(que::MsgQueue& queue):Socket(true), m_message_queue(queue)
+    explicit ServerSocket(que::MsgQueue& queue):Socket(true), m_message_queue(queue)
     {}
+    ServerSocket()=delete;
     ~ServerSocket() {}
     ServerSocket(const ServerSocket& ) = delete;
     ServerSocket& operator=(const ServerSocket&) = delete;
