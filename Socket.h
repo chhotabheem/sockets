@@ -18,6 +18,7 @@ namespace sock
 class Socket
 {
 private:
+    bool m_is_server_sock = false;
     int m_socket_desc =-1;
     const int m_prefix_msg_size = 5;
     struct addrinfo* m_addr_info = nullptr;
@@ -42,7 +43,8 @@ private:
     }
 
 public:
-    Socket() {}
+    explicit Socket(const int is_server_sock): m_is_server_sock(is_server_sock)
+    {}
     ~Socket()
     {
         cleanup();
@@ -59,6 +61,10 @@ public:
         std::memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
+        if(m_is_server_sock)
+        {
+            hints.ai_flags = AI_PASSIVE;
+        }
         if ((status = getaddrinfo(server.c_str(), port.c_str(), &hints, &m_addr_info_list)) != 0)
         {
             //fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));

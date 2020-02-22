@@ -9,7 +9,8 @@ class ClientSocket: public Socket
 {
 private:
 public:
-    ClientSocket() {}
+    ClientSocket():Socket(false)
+    {}
     ~ClientSocket() {}
     ClientSocket(const ClientSocket& ) = delete;
     ClientSocket& operator=(const ClientSocket&) = delete;
