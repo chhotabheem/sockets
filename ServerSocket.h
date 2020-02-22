@@ -6,6 +6,11 @@
 #include <fcntl.h>
 #include<iostream>
 
+namespace que
+{
+class MsgQueue;
+}
+
 namespace sock
 {
 class ServerSocket: public Socket
@@ -15,6 +20,7 @@ private:
     int m_epoll_id = -1;
     static const int m_max_events = 1500;
     struct epoll_event m_epoll_events[m_max_events];
+    que::MsgQueue& m_message_queue;
 
     void set_to_non_blocking_mode(const int sock_id)
     {
@@ -37,7 +43,8 @@ private:
     }
 
 public:
-    ServerSocket():Socket(true) {}
+    ServerSocket(que::MsgQueue& queue):Socket(true), m_message_queue(queue)
+    {}
     ~ServerSocket() {}
     ServerSocket(const ServerSocket& ) = delete;
     ServerSocket& operator=(const ServerSocket&) = delete;
