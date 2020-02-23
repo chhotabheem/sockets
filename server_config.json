@@ -1,4 +1,5 @@
 {
     "MaxNumberOfMsgsInReceiveQueue": "100",
-    "MaxNumberOfMsgsInSendQueue": "100"
+    "MaxNumberOfMsgsInSendQueue": "100",
+    "ClientMessagesLogFile": "client_msgs.txt"
 }

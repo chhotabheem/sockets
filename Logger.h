@@ -12,7 +12,7 @@ namespace que
 class MsgQueue;
 }
 
-namespace log
+namespace msglog
 {
 class Logger
 {
