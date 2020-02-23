@@ -1,0 +1,4 @@
+{
+    "MaxNumberOfMsgsInReceiveQueue": "100",
+    "MaxNumberOfMsgsInSendQueue": "100"
+}

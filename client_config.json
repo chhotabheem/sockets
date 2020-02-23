@@ -1,0 +1,6 @@
+{
+    "ClientName": "tcpclient",
+    "NumberOfObjectsInEachMsg": "1",
+    "TotalNumberOfMsgsToBeSent": "1",
+    "TimeIntervalBwMsgsInSec": "2"
+}

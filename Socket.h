@@ -114,8 +114,8 @@ public:
 
     void Send(const std::string& data, int send_sock)
     {
-        std::cout<<"enter: Send()"<<std::endl;
-        std::cout<<"Send(): data to be sent:"<<data<<std::endl;
+        //std::cout<<"enter: Send()"<<std::endl;
+        //std::cout<<"Send(): data to be sent:"<<data<<std::endl;
 
         std::string data_size_str = std::to_string(data.size());
         auto data_size = data_size_str.size();
@@ -131,7 +131,7 @@ public:
         const char* buf = msg.c_str();
         auto n =0;
 
-        std::cout<<"Send(): message to be sent:"<<msg<<std::endl;
+        //std::cout<<"Send(): message to be sent:"<<msg<<std::endl;
         while(msg_sent_size < msg.size())
         {
             n = send(send_sock, buf+msg_sent_size, msg_remaining, 0);
@@ -143,7 +143,7 @@ public:
             msg_sent_size += n;
             msg_remaining -= n;
         }
-        std::cout<<"exit: Send()"<<std::endl;
+        //std::cout<<"exit: Send()"<<std::endl;
     }
 
     std::string Receive(int recv_sock)
@@ -158,13 +158,11 @@ public:
             return data;
         }
         buf[n] ='\0';
-        std::cout<<"buf is:"<< buf<<std::endl;
         std::string msg_size_str(buf);
         auto msg_size = std::stoi(msg_size_str);
         auto size_received =m_prefix_msg_size;
         while(size_received<msg_size)
         {
-            std::cout<<"entering mines"<<std::endl;
             n = recv(recv_sock, buf, sizeof(buf), 0);
             if(n<=0)
             {
@@ -174,7 +172,7 @@ public:
             data.append(buf);
             size_received += n;
         }
-        std::cout<<"date is: "<< data<<std::endl;
+        std::cout<<"exit: Receive()"<< std::endl;
 
         return data;
     }

@@ -21,7 +21,7 @@ class ServerSocket: public Socket
 private:
     int m_conn_descrip = -1;
     int m_epoll_id = -1;
-    static const int m_max_events = 1500;
+    static const int m_max_events = 15000;
     struct epoll_event m_epoll_events[m_max_events];
     que::MsgQueue& m_request_queue;
     que::MsgQueue& m_response_queue;
@@ -125,9 +125,9 @@ public:
 
     void Send(std::string data, int sock_descrip)
     {
-        std::cout<<"enter: Send()"<<std::endl;
+        //std::cout<<"enter: Send()"<<std::endl;
         Socket::Send(data, sock_descrip);
-        std::cout<<"exit: Send()"<<std::endl;
+        //std::cout<<"exit: Send()"<<std::endl;
     }
 
     std::string Receive()
@@ -189,7 +189,6 @@ public:
     {
         std::cout<<"enter: handle_event_from_existing_conn()"<<std::endl;
         std::string data = Socket::Receive(event.data.fd);
-        std::cout << data<<std::endl;
         if(data.empty())
         {
             std::cout<<"handle_event_from_existing_conn(): close connection"<<std::endl;
@@ -206,18 +205,18 @@ public:
 
     void send_response()
     {
-        std::cout<<"enter: send_response()"<<std::endl;
+        //std::cout<<"enter: send_response()"<<std::endl;
         while(true)
         {
             msgholder::MsgHolder msg = m_response_queue.pop();
             if(m_active_conn_descrip_set.is_connection_up(msg.get_connection_descrip()))
             {
-                std::cout<<"send_response(): connection is open for conn id:"<< msg.get_connection_descrip() <<std::endl;
+                //std::cout<<"send_response(): connection is open for conn id:"<< msg.get_connection_descrip() <<std::endl;
                 Send(msg.get_data(), msg.get_connection_descrip());
             }
             else
             {
-                std::cout<<"send_response(): connection is already closed descriptor:"<<msg.get_connection_descrip()<<std::endl;
+                //std::cout<<"send_response(): connection is already closed descriptor:"<<msg.get_connection_descrip()<<std::endl;
             }
         }
     }

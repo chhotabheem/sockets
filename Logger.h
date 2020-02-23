@@ -1,11 +1,12 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include "MsgHolder.h"
+#include "message.pb.h"
+
 #include<fstream>
 #include<string>
-
-#include "MsgHolder.h"
-
+#include<iostream>
 namespace que
 {
 class MsgQueue;
@@ -39,10 +40,23 @@ public:
         while(true)
         {
             msgholder::MsgHolder req_msg = m_request_queue.pop();
-            //m_msg_file<< msg;
-            //m_msg_file<<std::endl;
-            std::cout<<"SENDING RESPONSE"<<std::endl;
-            std::string resp("positive ack");
+            Payload pload;
+            std::string resp;
+
+            if(!pload.ParseFromString(req_msg.get_data()))
+            {
+                resp = "ACK fail";
+            }
+            else
+            {
+                for (auto& data:pload.data())
+                {
+                    m_msg_file<< "message from client:" << data.client_msg()<< " with msg id:"<< data.msg_id();
+                    m_msg_file<<std::endl;
+                }
+                resp = "ACK success";
+            }
+
             msgholder::MsgHolder res_msg(resp, req_msg.get_connection_descrip());
             m_resp_queue.push(res_msg);
 
