@@ -17,6 +17,7 @@ int main()
         std::string data("hello server");
         //pload.SerializeToString(&data);
         csock.Send(data);
+        std::cout<< csock.Receive()<<std::endl;
         sleep(2);
         ++k;
     }

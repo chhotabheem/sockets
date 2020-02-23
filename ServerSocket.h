@@ -2,6 +2,9 @@
 #define SERVER_SOCKET_H
 
 #include "Socket.h"
+#include "MsgHolder.h"
+#include "ConnectionIdSet.h"
+
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include<iostream>
@@ -20,7 +23,9 @@ private:
     int m_epoll_id = -1;
     static const int m_max_events = 1500;
     struct epoll_event m_epoll_events[m_max_events];
-    que::MsgQueue& m_message_queue;
+    que::MsgQueue& m_request_queue;
+    que::MsgQueue& m_response_queue;
+    connset::ConnIdSet  m_active_conn_descrip_set;
 
     void set_to_non_blocking_mode(const int sock_id)
     {
@@ -42,7 +47,8 @@ private:
     }
 
 public:
-    explicit ServerSocket(que::MsgQueue& queue):Socket(true), m_message_queue(queue)
+    explicit ServerSocket(que::MsgQueue& req_queue, que::MsgQueue& resp_que):
+        Socket(true), m_request_queue(req_queue),m_response_queue(resp_que)
     {}
     ServerSocket()=delete;
     ~ServerSocket() {}
@@ -112,16 +118,16 @@ public:
             perror("Accept(): failed");
             return false;
         }
+        m_active_conn_descrip_set.add_conn_descrip(m_conn_descrip);
         std::cout<<"Accept(): success"<<std::endl;
         return true;
     }
 
-    void Send(std::string& data)
+    void Send(std::string data, int sock_descrip)
     {
         std::cout<<"enter: Send()"<<std::endl;
-        Socket::Send(data, m_conn_descrip);
+        Socket::Send(data, sock_descrip);
         std::cout<<"exit: Send()"<<std::endl;
-
     }
 
     std::string Receive()
@@ -139,6 +145,7 @@ public:
         {
             std::cout<<"ignore_event(): ignore and close connection"<<std::endl;
             close (event.data.fd);
+            m_active_conn_descrip_set.remove_conn_descrip(event.data.fd);
             return true;
         }
         std::cout<<"ignore_event(): procced"<<std::endl;
@@ -187,12 +194,32 @@ public:
         {
             std::cout<<"handle_event_from_existing_conn(): close connection"<<std::endl;
             close(event.data.fd);
+            m_active_conn_descrip_set.remove_conn_descrip(event.data.fd);
         }
         else
         {
-            m_message_queue.push(data);
+            msgholder::MsgHolder msg_holder(data, event.data.fd);
+            m_request_queue.push(msg_holder);
         }
         std::cout<<"exit: handle_event_from_existing_conn()"<<std::endl;
+    }
+
+    void send_response()
+    {
+        std::cout<<"enter: send_response()"<<std::endl;
+        while(true)
+        {
+            msgholder::MsgHolder msg = m_response_queue.pop();
+            if(m_active_conn_descrip_set.is_connection_up(msg.get_connection_descrip()))
+            {
+                std::cout<<"send_response(): connection is open for conn id:"<< msg.get_connection_descrip() <<std::endl;
+                Send(msg.get_data(), msg.get_connection_descrip());
+            }
+            else
+            {
+                std::cout<<"send_response(): connection is already closed descriptor:"<<msg.get_connection_descrip()<<std::endl;
+            }
+        }
     }
 
     void communicate()
